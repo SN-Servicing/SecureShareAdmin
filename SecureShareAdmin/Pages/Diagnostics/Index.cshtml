@@ -1,0 +1,16 @@
+@page
+@model Snsc.SecureShareAdmin.Pages.Diagnostics.IndexModel
+@{
+    ViewData["Title"] = "Diagnostics";
+}
+<h1 class="page-title">Infrastructure diagnostics</h1>
+<dl class="row">
+    <dt class="col-sm-3">Windows user</dt>
+    <dd class="col-sm-9">@Model.WindowsUserName</dd>
+    <dt class="col-sm-3">AMS user id</dt>
+    <dd class="col-sm-9">@Model.AmsUserId</dd>
+    <dt class="col-sm-3">Zone count</dt>
+    <dd class="col-sm-9">@Model.ZoneCount</dd>
+    <dt class="col-sm-3">Distinct zone types</dt>
+    <dd class="col-sm-9">@Model.ZoneTypeCount</dd>
+</dl>

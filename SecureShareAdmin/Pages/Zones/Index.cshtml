@@ -1,0 +1,75 @@
+@page
+@model Snsc.SecureShareAdmin.Pages.Zones.IndexModel
+@{
+    ViewData["Title"] = "View Zones";
+}
+<h1 class="page-title">View Zones</h1>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<form method="post" asp-page-handler="Search" class="fieldset-ssi">
+    <legend>Zone Filter</legend>
+    <div class="row g-2 align-items-end">
+        <div class="col-auto">
+            <label class="form-label form-label-sm" asp-for="ZoneTypeId">Zone Type</label>
+            <select class="form-select form-select-sm" asp-for="ZoneTypeId" asp-items="Model.ZoneTypeOptions"></select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label form-label-sm" asp-for="Search">Search</label>
+            <input class="form-control form-control-sm" asp-for="Search" title="Search description and object IDs. Separate multiple terms with spaces." />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-ssi">Search</button>
+        </div>
+    </div>
+</form>
+
+@if (Model.Zones.Count == 0)
+{
+    <p class="text-muted">@Model.EmptyMessage</p>
+}
+else
+{
+    <table class="table table-sm table-ssi">
+        <thead>
+            <tr>
+                <th>Zone Type</th>
+                <th>Description</th>
+                <th>File Zone Details</th>
+                <th>File Count</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var zone in Model.Zones)
+        {
+            <tr>
+                <td>@zone.ZoneTypeName</td>
+                <td><a asp-page="/Zones/Edit" asp-route-zoneId="@zone.ZoneId">@zone.Description</a></td>
+                <td>
+                    @zone.PrimaryFieldName: @zone.PrimaryIdValue
+                    @if (!string.IsNullOrEmpty(zone.SecondaryIdValue))
+                    {
+                        <span class="ms-3">@zone.SecondaryFieldName: @zone.SecondaryIdValue</span>
+                    }
+                </td>
+                <td>@zone.FileCount</td>
+                <td>
+                    <form method="post" asp-page-handler="ToggleNotify" class="d-inline">
+                        <input type="hidden" name="zoneId" value="@zone.ZoneId" />
+                        <input type="hidden" name="currentlyOptedIn" value="@zone.NotificationOptIn.ToString()" />
+                        <input type="hidden" asp-for="ZoneTypeId" />
+                        <input type="hidden" asp-for="Search" />
+                        <button type="submit" class="btn btn-link btn-sm p-0" title="Toggle email notifications">
+                            @(zone.NotificationOptIn ? "Notify: On" : "Notify: Off")
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

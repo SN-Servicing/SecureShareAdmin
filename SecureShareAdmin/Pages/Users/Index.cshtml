@@ -1,0 +1,44 @@
+@page
+@model Snsc.SecureShareAdmin.Pages.Users.IndexModel
+@{
+    ViewData["Title"] = "View Users";
+}
+<h1 class="page-title">View Users</h1>
+
+<form method="post" asp-page-handler="Search" class="fieldset-ssi">
+    <legend>User Filter</legend>
+    <p class="small mb-2">Enter all or part of a user's email address (a.k.a. user name) and click Search.</p>
+    <div class="input-group">
+        <input class="form-control" asp-for="Search" style="width:30em" />
+        <button type="submit" class="btn btn-ssi">Search</button>
+    </div>
+</form>
+
+@if (Model.Users.Count == 0)
+{
+    <p class="text-muted mt-3">@Model.EmptyMessage</p>
+}
+else
+{
+    <table class="table table-sm table-ssi mt-3">
+        <thead>
+            <tr>
+                <th>User Name</th>
+                <th>Name</th>
+                <th>Created</th>
+                <th>Disabled?</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var user in Model.Users)
+        {
+            <tr>
+                <td><a asp-page="/Users/Edit" asp-route-userName="@user.UserName">@user.UserName</a></td>
+                <td>@user.Name</td>
+                <td>@(user.CreationDate == DateTime.MinValue ? "" : user.CreationDate.ToString("d"))</td>
+                <td>@user.Comment</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

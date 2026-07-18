@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "SecureShareAdmin": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5150",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "windowsAuthentication": true,
+      "anonymousAuthentication": false
+    }
+  }
+}

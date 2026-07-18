@@ -1,0 +1,51 @@
+@page
+@model Snsc.SecureShareAdmin.Pages.Options.IndexModel
+@{
+    ViewData["Title"] = "My Options";
+}
+<h1 class="page-title">My Options</h1>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <p class="message-ssi">@Model.Message</p>
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<h2 class="h6 page-title">Email Notifications</h2>
+@if (Model.Zones.Count == 0)
+{
+    <p class="text-muted">No zones available.</p>
+}
+else
+{
+    <table class="table table-sm table-ssi">
+        <thead>
+            <tr>
+                <th>Zone</th>
+                <th>Type</th>
+                <th>Notifications</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var zone in Model.Zones)
+        {
+            <tr>
+                <td>@zone.Description</td>
+                <td>@zone.ZoneTypeName</td>
+                <td>
+                    <form method="post" asp-page-handler="ToggleNotify" class="d-inline">
+                        <input type="hidden" name="zoneId" value="@zone.ZoneId" />
+                        <input type="hidden" name="currentlyOptedIn" value="@zone.NotificationOptIn.ToString()" />
+                        <button type="submit" class="btn btn-link btn-sm p-0">
+                            @(zone.NotificationOptIn ? "Enabled" : "Disabled")
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

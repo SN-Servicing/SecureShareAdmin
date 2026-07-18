@@ -1,0 +1,18 @@
+﻿@page
+@model Snsc.SecureShareAdmin.Pages.ErrorModel
+@{
+    ViewData["Title"] = "Error";
+}
+<h1 class="page-title">An error has occurred</h1>
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+else
+{
+    <p>An unexpected error occurred while processing your request.</p>
+}
+@if (!string.IsNullOrEmpty(Model.RequestId))
+{
+    <p class="text-muted small">Request ID: @Model.RequestId</p>
+}

@@ -1,0 +1,104 @@
+@page "{zoneId:int}"
+@model Snsc.SecureShareAdmin.Pages.Zones.EditModel
+@{
+    ViewData["Title"] = "Edit Zone";
+}
+<h1 class="page-title">Edit Zone</h1>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <p class="message-ssi">@Model.Message</p>
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<form method="post" asp-page-handler="Save">
+    <input type="hidden" asp-for="ZoneId" />
+    <div class="mb-2">
+        <label class="form-label" asp-for="ZoneTypeId">Zone Type</label>
+        <select class="form-select" asp-for="ZoneTypeId" asp-items="Model.ZoneTypeOptions"></select>
+    </div>
+    <div class="mb-2">
+        <label class="form-label">@(Model.SelectedType?.PrimaryObjectIdFieldName ?? "Primary Value")</label>
+        <input class="form-control" asp-for="PrimaryValue" />
+    </div>
+    @if (!string.IsNullOrEmpty(Model.SelectedType?.SecondaryObjectIdFieldName))
+    {
+        <div class="mb-2">
+            <label class="form-label">@Model.SelectedType.SecondaryObjectIdFieldName</label>
+            <input class="form-control" asp-for="SecondaryValue" />
+        </div>
+    }
+    <div class="mb-3">
+        <label class="form-label" asp-for="Description">Description</label>
+        <textarea class="form-control" asp-for="Description" rows="3"></textarea>
+    </div>
+
+    <h2 class="h6 page-title">Zone Users</h2>
+    @if (Model.ZoneUsers.Count == 0)
+    {
+        <p class="text-muted">No users found for this zone</p>
+    }
+    else
+    {
+        <table class="table table-sm table-ssi mb-3">
+            <thead><tr><th></th><th>User Name</th><th>Last Login Date</th></tr></thead>
+            <tbody>
+            @foreach (var user in Model.ZoneUsers)
+            {
+                <tr>
+                    <td>
+                        <button type="submit" class="btn btn-link btn-sm p-0"
+                                formaction="?handler=RemoveUser&amp;zonePermissionId=@user.ZonePermissionId"
+                                onclick="return confirm('Are you sure you want to remove this users access to this zone?');">
+                            Remove
+                        </button>
+                    </td>
+                    <td>@user.UserName</td>
+                    <td>@(user.LastLoginDate == DateTime.MinValue ? "" : user.LastLoginDate.ToString("g"))</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+
+    <h2 class="h6 page-title">Add Users</h2>
+    <div class="fieldset-ssi">
+        <legend>User Filter</legend>
+        <div class="input-group input-group-sm mb-2">
+            <input class="form-control" asp-for="UserSearch" />
+            <button class="btn btn-outline-secondary" type="submit" formaction="?handler=SearchUsers">Search</button>
+        </div>
+        @if (Model.FoundUsers.Count > 0)
+        {
+            <table class="table table-sm table-ssi">
+                <thead><tr><th></th><th>User Name</th><th>Name</th></tr></thead>
+                <tbody>
+                @foreach (var user in Model.FoundUsers)
+                {
+                    <tr>
+                        <td><input type="checkbox" name="SelectedUserNames" value="@user.UserName" /></td>
+                        <td>@user.UserName</td>
+                        <td>@user.Name</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <a asp-page="/Zones/Index">&lt;&lt; Back</a>
+        <div class="d-flex gap-2 align-items-center">
+            <button type="submit" class="btn btn-outline-danger"
+                    formaction="?handler=DeleteZone"
+                    onclick="return confirm('Are you sure you want to delete this zone?');">
+                Delete Zone
+            </button>
+            <button type="submit" class="btn btn-ssi">Save Zone</button>
+        </div>
+    </div>
+</form>
+<p class="mt-2"><a asp-page="/Zones/Files" asp-route-zoneId="@Model.ZoneId">View zone files</a></p>

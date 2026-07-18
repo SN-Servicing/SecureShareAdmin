@@ -1,0 +1,99 @@
+:root {
+  --ssi-maroon: #660000;
+  --ssi-cream: #ffffcc;
+  --ssi-link: #330099;
+  --ssi-border: #cc9966;
+  --ssi-header-fg: #ffffcc;
+  --ssi-message: #3366ff;
+}
+
+html {
+  font-size: 14px;
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 4rem;
+  color: #222;
+  background: #faf8f5;
+}
+
+a {
+  color: var(--ssi-link);
+}
+
+.navbar-ssi {
+  background-color: var(--ssi-maroon);
+}
+
+.navbar-ssi .navbar-brand,
+.navbar-ssi .nav-link,
+.navbar-ssi .navbar-text {
+  color: var(--ssi-header-fg) !important;
+}
+
+.navbar-ssi .nav-link:hover {
+  color: #fff !important;
+  text-decoration: underline;
+}
+
+.page-title {
+  color: var(--ssi-maroon);
+  font-weight: 700;
+  font-size: 1rem;
+  border-bottom: 1px solid var(--ssi-maroon);
+  padding-bottom: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.table-ssi thead th {
+  background-color: var(--ssi-maroon);
+  color: var(--ssi-header-fg);
+  border-color: var(--ssi-maroon);
+}
+
+.table-ssi tbody td {
+  border-color: var(--ssi-border);
+  color: var(--ssi-link);
+  background: #fff;
+}
+
+.btn-ssi {
+  background-color: var(--ssi-maroon);
+  border-color: var(--ssi-maroon);
+  color: #fff;
+}
+
+.btn-ssi:hover {
+  background-color: #4d0000;
+  border-color: #4d0000;
+  color: #fff;
+}
+
+.message-ssi {
+  color: var(--ssi-message);
+  font-weight: 700;
+}
+
+.fieldset-ssi {
+  border: 1px solid #ccc;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.fieldset-ssi legend {
+  font-size: 0.75rem;
+  float: none;
+  width: auto;
+  padding: 0 0.35rem;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 3rem;
+  background: #fff;
+}

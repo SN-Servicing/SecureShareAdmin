@@ -1,0 +1,63 @@
+@page
+@model Snsc.SecureShareAdmin.Pages.Zones.CreateModel
+@{
+    ViewData["Title"] = "Add Zone";
+}
+<h1 class="page-title">Add Zone</h1>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<form method="post" asp-page-handler="Create" class="mb-4">
+    <div class="mb-2">
+        <label class="form-label" asp-for="ZoneTypeId">Zone Type</label>
+        <select class="form-select" asp-for="ZoneTypeId" asp-items="Model.ZoneTypeOptions"></select>
+    </div>
+    <div class="mb-2">
+        <label class="form-label">@(Model.SelectedType?.PrimaryObjectIdFieldName ?? "Primary Value")</label>
+        <input class="form-control" asp-for="PrimaryValue" />
+    </div>
+    @if (!string.IsNullOrEmpty(Model.SelectedType?.SecondaryObjectIdFieldName))
+    {
+        <div class="mb-2">
+            <label class="form-label">@Model.SelectedType.SecondaryObjectIdFieldName</label>
+            <input class="form-control" asp-for="SecondaryValue" />
+        </div>
+    }
+    <div class="mb-3">
+        <label class="form-label" asp-for="Description">Description</label>
+        <textarea class="form-control" asp-for="Description" rows="3"></textarea>
+    </div>
+
+    <h2 class="h6 page-title">Zone Users</h2>
+    <div class="fieldset-ssi">
+        <legend>User Filter</legend>
+        <div class="input-group input-group-sm mb-2">
+            <input class="form-control" asp-for="UserSearch" placeholder="Part of email / user name" />
+            <button class="btn btn-outline-secondary" type="submit" formaction="?handler=SearchUsers" formmethod="post">Search</button>
+        </div>
+        @if (Model.FoundUsers.Count > 0)
+        {
+            <table class="table table-sm table-ssi">
+                <thead><tr><th></th><th>User Name</th><th>Name</th></tr></thead>
+                <tbody>
+                @foreach (var user in Model.FoundUsers)
+                {
+                    <tr>
+                        <td><input type="checkbox" name="SelectedUserNames" value="@user.UserName" /></td>
+                        <td>@user.UserName</td>
+                        <td>@user.Name</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <a class="btn btn-outline-secondary" asp-page="/Zones/Index">&lt;&lt; Zone List</a>
+        <button type="submit" class="btn btn-ssi">Add Zone</button>
+    </div>
+</form>
