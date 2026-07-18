@@ -1,0 +1,40 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="AdminMaster.master.cs" Inherits="SecureDataInterchange.Admin.Common.AdminMaster" %>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head id="Head1" runat="server">
+    <title>Secure Data Interchange Admin</title>
+    <link href="stylesheet.css" type="text/css" rel="stylesheet" />
+</head>
+<body>
+    <form id="form1" runat="server">
+        <div id="header" class="MainUiTitle">
+            SNSC Secure Share Administration (formerly SDI Admin) 
+            <%--<div id="logo">
+            </div>--%>
+        </div>
+        <div>
+            <asp:ContentPlaceHolder ID="MainContent" runat="server">
+            </asp:ContentPlaceHolder>
+            
+            <asp:Panel ID="pnlError" runat="server" Visible="false">
+                <table >
+                    <tr>
+                        <td style="padding:20px;">
+                            <asp:Label ID="lblError" runat="server" Font-Size="Medium" ForeColor="Maroon"></asp:Label>
+                        </td>
+                    </tr>
+                </table>
+            </asp:Panel>
+            
+        </div>
+        <%--<div id="footerbar">
+            &nbsp;</div>
+        <div id="foot">
+            Copyright © 2009 SN Servicing Corporation, All rights reserved        Please read our <a href="http://www.snsc.com/TermsAndConditions.aspx" target="_blank">
+                Terms &amp; Conditions</a> and <a href="http://www.snsc.com/PrivacyPolicy.aspx" target="_blank">
+                    Privacy Policy</a></div>--%>
+    </form>
+</body>
+</html>

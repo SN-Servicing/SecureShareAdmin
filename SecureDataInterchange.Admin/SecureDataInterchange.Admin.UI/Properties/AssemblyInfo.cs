@@ -1,0 +1,5 @@
+﻿[assembly: System.Reflection.AssemblyTitle("SecureDataInterchange.Admin.UI")]
+[assembly: System.Reflection.AssemblyDescription("AMS user interface code for SecureDataInterchange.Admin.UI")]
+[assembly: System.Reflection.AssemblyDelaySign(false)]
+[assembly: System.CLSCompliant(false)]
+[assembly: System.Runtime.InteropServices.ComVisible(false)]

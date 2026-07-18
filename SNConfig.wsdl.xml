@@ -1,0 +1,167 @@
+<wsdl:definitions
+    xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/"
+    xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+    xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/"
+    xmlns:tns="http://tsw-farm/snconfig"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:s="http://www.w3.org/2001/XMLSchema"
+    xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
+    xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+    targetNamespace="http://tsw-farm/snconfig"
+>
+<wsdl:types>
+<s:schema
+            elementFormDefault="qualified"
+            targetNamespace="http://tsw-farm/snconfig"
+        >
+<s:element name="GetConfig">
+<s:complexType>
+<s:sequence>
+<s:element minOccurs="0" maxOccurs="1" name="environmentName" type="s:string" />
+</s:sequence>
+</s:complexType>
+</s:element>
+<s:element name="GetConfigResponse">
+<s:complexType>
+<s:sequence>
+<s:element minOccurs="0" maxOccurs="1" name="GetConfigResult">
+<s:complexType>
+<s:sequence>
+<s:element ref="s:schema" />
+<s:any />
+</s:sequence>
+</s:complexType>
+</s:element>
+</s:sequence>
+</s:complexType>
+</s:element>
+<s:element name="GetUserConfig">
+<s:complexType>
+<s:sequence>
+<s:element
+                            minOccurs="1"
+                            maxOccurs="1"
+                            name="userId"
+                            nillable="true"
+                            type="s:int"
+                        />
+<s:element minOccurs="0" maxOccurs="1" name="sid" type="s:string" />
+<s:element
+                            minOccurs="0"
+                            maxOccurs="1"
+                            name="userPrincipalName"
+                            type="s:string"
+                        />
+<s:element minOccurs="0" maxOccurs="1" name="assetId" type="s:string" />
+<s:element
+                            minOccurs="0"
+                            maxOccurs="1"
+                            name="connectionString"
+                            type="s:string"
+                        />
+</s:sequence>
+</s:complexType>
+</s:element>
+<s:element name="GetUserConfigResponse">
+<s:complexType>
+<s:sequence>
+<s:element minOccurs="0" maxOccurs="1" name="GetUserConfigResult">
+<s:complexType>
+<s:sequence>
+<s:element ref="s:schema" />
+<s:any />
+</s:sequence>
+</s:complexType>
+</s:element>
+</s:sequence>
+</s:complexType>
+</s:element>
+</s:schema>
+</wsdl:types>
+<wsdl:message name="GetConfigSoapIn">
+<wsdl:part name="parameters" element="tns:GetConfig" />
+</wsdl:message>
+<wsdl:message name="GetConfigSoapOut">
+<wsdl:part name="parameters" element="tns:GetConfigResponse" />
+</wsdl:message>
+<wsdl:message name="GetUserConfigSoapIn">
+<wsdl:part name="parameters" element="tns:GetUserConfig" />
+</wsdl:message>
+<wsdl:message name="GetUserConfigSoapOut">
+<wsdl:part name="parameters" element="tns:GetUserConfigResponse" />
+</wsdl:message>
+<wsdl:portType name="SNConfigSoap">
+<wsdl:operation name="GetConfig">
+<wsdl:input message="tns:GetConfigSoapIn" />
+<wsdl:output message="tns:GetConfigSoapOut" />
+</wsdl:operation>
+<wsdl:operation name="GetUserConfig">
+<wsdl:input message="tns:GetUserConfigSoapIn" />
+<wsdl:output message="tns:GetUserConfigSoapOut" />
+</wsdl:operation>
+</wsdl:portType>
+<wsdl:binding name="SNConfigSoap" type="tns:SNConfigSoap">
+<soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+<wsdl:operation name="GetConfig">
+<soap:operation
+                soapAction="http://tsw-farm/snconfig/GetConfig"
+                style="document"
+            />
+<wsdl:input>
+<soap:body use="literal" />
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal" />
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="GetUserConfig">
+<soap:operation
+                soapAction="http://tsw-farm/snconfig/GetUserConfig"
+                style="document"
+            />
+<wsdl:input>
+<soap:body use="literal" />
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal" />
+</wsdl:output>
+</wsdl:operation>
+</wsdl:binding>
+<wsdl:binding name="SNConfigSoap12" type="tns:SNConfigSoap">
+<soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+<wsdl:operation name="GetConfig">
+<soap12:operation
+                soapAction="http://tsw-farm/snconfig/GetConfig"
+                style="document"
+            />
+<wsdl:input>
+<soap12:body use="literal" />
+</wsdl:input>
+<wsdl:output>
+<soap12:body use="literal" />
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="GetUserConfig">
+<soap12:operation
+                soapAction="http://tsw-farm/snconfig/GetUserConfig"
+                style="document"
+            />
+<wsdl:input>
+<soap12:body use="literal" />
+</wsdl:input>
+<wsdl:output>
+<soap12:body use="literal" />
+</wsdl:output>
+</wsdl:operation>
+</wsdl:binding>
+<wsdl:service name="SNConfig">
+<wsdl:port name="SNConfigSoap" binding="tns:SNConfigSoap">
+<soap:address location="http://snconfig:8080/SNConfig/SNConfig.asmx" />
+</wsdl:port>
+<wsdl:port name="SNConfigSoap12" binding="tns:SNConfigSoap12">
+<soap12:address location="http://snconfig:8080/SNConfig/SNConfig.asmx" />
+</wsdl:port>
+</wsdl:service>
+</wsdl:definitions>
+
