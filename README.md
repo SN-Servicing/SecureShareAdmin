@@ -50,6 +50,14 @@ Or open `SecureShareAdmin.sln` in Visual Studio and set **SecureShareAdmin** as 
 
 Windows Authentication is required (Negotiate). There is no anonymous or AMS-id override — if Windows auth fails or the login has no LMS `NTLoginName` match, the app fails with an explicit error.
 
+## CI / packages
+
+GitHub Actions (`.github/workflows/ci.yml`) builds on PRs and pushes.
+
+- **Versioning:** [MinVer](https://github.com/adamralph/minver) from git tags prefixed with `v` (example: `git tag v1.0.0 && git push --tags`).
+- **main:** publishes a self-contained **win-x64 Release** zip (same flags as `PublishAndDeployTo_STAGING.ps1`), uploads it as a workflow artifact, and refreshes the prerelease tag/release `main-latest`.
+- **Tags `v*`:** creates a GitHub Release with the same zip attached.
+
 ## Status
 
 Treat this as **work in progress**. Expect gaps versus the archived WebForms app until cutover is validated in a real environment.
