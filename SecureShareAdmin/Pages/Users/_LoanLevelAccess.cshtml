@@ -1,0 +1,101 @@
+@model Snsc.SecureShareAdmin.Domain.LoanLevelAccessValidation
+@{
+    LoanLevelDirectoryAccount? account = Model.DirectoryAccount;
+    string amsUserId = LoanLevelAccessDisplay.FormatUserId(account?.AmsUserId);
+    string adSid = LoanLevelAccessDisplay.FormatText(account?.ActiveDirectorySid);
+    string amsName = LoanLevelAccessDisplay.FormatText(account?.AmsFullName);
+    string adName = LoanLevelAccessDisplay.FormatText(account?.AdFullName);
+    string amsEmail = LoanLevelAccessDisplay.FormatText(account?.AmsEmail);
+    string adEmail = LoanLevelAccessDisplay.FormatText(account?.AdEmail);
+    string amsDisabled = LoanLevelAccessDisplay.FormatAdverseDate(account?.AmsAccountDisabledDate);
+    string adTerminated = LoanLevelAccessDisplay.FormatEnteredTermUsersDate(account?.EnteredTerminatedUsersDate);
+}
+
+<h2 class="h6 page-title">Loan Access Dependencies</h2>
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-warning">@Model.ErrorMessage</div>
+}
+<table class="table table-sm table-ssi table-ssi-loan-compare w-auto mb-3">
+    <thead>
+        <tr>
+            <th scope="col"></th>
+            <th scope="col">AMS</th>
+            <th scope="col">Active Directory</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th scope="row">ID</th>
+            <td>
+                <partial name="_LoanLevelValueCell" model="amsUserId" />
+            </td>
+            <td>
+                <partial name="_LoanLevelValueCell" model="adSid" />
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">Full Name</th>
+            <td>
+                <partial name="_LoanLevelValueCell" model="amsName" />
+            </td>
+            <td>
+                <partial name="_LoanLevelValueCell" model="adName" />
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">Email</th>
+            <td>
+                <partial name="_LoanLevelValueCell" model="amsEmail" />
+            </td>
+            <td>
+                <partial name="_LoanLevelValueCell" model="adEmail" />
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">Enabled</th>
+            <td>
+                <partial name="_LoanLevelEnabledCell" model="account?.AmsAccountIsEnabled" />
+            </td>
+            <td>
+                <partial name="_LoanLevelEnabledCell" model="account?.AdAccountIsEnabled" />
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">Disabled Date</th>
+            <td>
+                <partial name="_LoanLevelAdverseDateCell" model="amsDisabled" />
+            </td>
+            <td>
+                <partial name="_LoanLevelAdverseDateCell" model="adTerminated" />
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<h2 class="h6 page-title">Investor Access Groups</h2>
+@if (Model.InvestorAccessGroups.Count == 0)
+{
+    <p class="mb-0">
+        <span class="ssi-status ssi-status-bad" aria-hidden="true">&#10005;</span>
+        @LoanLevelAccessDisplay.NoInvestorAccessMarker
+    </p>
+}
+else
+{
+    <table class="table table-sm table-ssi mb-0">
+        <thead>
+            <tr>
+                <th>Investor Access Group</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (string groupName in Model.InvestorAccessGroups)
+        {
+            <tr>
+                <td>@groupName</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

@@ -7,7 +7,7 @@
 
 ---
 
-Internal admin web app for **Secure Data Interchange (SecureShare)** — manage external users, file-sharing zones, zone permissions, and admin notification preferences.
+Internal admin web app for **Secure Share** — manage external users, file-sharing zones, zone permissions, and admin notification preferences.
 
 ## Stack
 
@@ -28,9 +28,8 @@ Internal admin web app for **Secure Data Interchange (SecureShare)** — manage 
 
 | Area | Routes |
 |------|--------|
-| Users | `/Users`, `/Users/Create`, `/Users/Edit` |
-| Zones | `/Zones`, `/Zones/Create`, `/Zones/Edit/{id}`, `/Zones/Files/{id}` |
-| Options | `/Options` |
+| Users | `/Users`, `/Users/Create`, `/Users/Edit/{externalUserId}` |
+| Zones | `/Zones`, `/Zones/Create`, `/Zones/Edit/{id}` |
 | Diagnostics | `/Diagnostics` (AMS id + zone counts) |
 
 ## Configuration

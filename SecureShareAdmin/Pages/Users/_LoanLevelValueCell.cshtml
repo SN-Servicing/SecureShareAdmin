@@ -1,0 +1,13 @@
+@model string
+@{
+    bool isMissing = LoanLevelAccessDisplay.IsMissing(Model);
+}
+@if (isMissing)
+{
+    <span class="ssi-status ssi-status-bad" aria-hidden="true">&#10005;</span>
+    <span class="ssi-missing">@Model</span>
+}
+else
+{
+    @Model
+}

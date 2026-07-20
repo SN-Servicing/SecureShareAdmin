@@ -7,6 +7,9 @@ namespace Snsc.SecureShareAdmin.Pages.Users;
 
 public sealed class IndexModel : PageModel
 {
+    private const int EmailMatchPageSize = 50;
+    private const int AllUsersPageSize = 10000;
+
     private readonly ExternalUserDirectory _users;
 
     public IndexModel(ExternalUserDirectory users)
@@ -15,10 +18,15 @@ public sealed class IndexModel : PageModel
     }
 
     [BindProperty]
-    public string? Search { get; set; }
+    public string? EmailSearch { get; set; }
+
+    [BindProperty]
+    public string? NameSearch { get; set; }
 
     public IReadOnlyList<ExternalUser> Users { get; private set; } = Array.Empty<ExternalUser>();
-    public string EmptyMessage { get; private set; } = "Enter part of a user email address and click Search.";
+
+    public string EmptyMessage { get; private set; } =
+        "Enter an email and/or name search and click Search.";
 
     public void OnGet()
     {
@@ -26,16 +34,33 @@ public sealed class IndexModel : PageModel
 
     public void OnPostSearch()
     {
-        if (string.IsNullOrWhiteSpace(Search))
+        bool hasEmail = !string.IsNullOrWhiteSpace(EmailSearch);
+        bool hasName = !string.IsNullOrWhiteSpace(NameSearch);
+        if (!hasEmail && !hasName)
         {
-            EmptyMessage = "Enter part of a user email address and click Search.";
+            EmptyMessage = "Enter an email and/or name search and click Search.";
             return;
         }
 
-        Users = _users.FindByUserName("%" + Search.Trim() + "%");
+        Users = LoadMatchingUsers(hasEmail);
+        if (hasName)
+        {
+            Users = UserNameSearch.FilterAndRank(Users, NameSearch);
+        }
+
         if (Users.Count == 0)
         {
             EmptyMessage = "No Users Found";
         }
+    }
+
+    private IReadOnlyList<ExternalUser> LoadMatchingUsers(bool hasEmail)
+    {
+        if (hasEmail)
+        {
+            return _users.FindByUserName("%" + EmailSearch!.Trim() + "%", EmailMatchPageSize);
+        }
+
+        return _users.FindByUserName("%", AllUsersPageSize);
     }
 }

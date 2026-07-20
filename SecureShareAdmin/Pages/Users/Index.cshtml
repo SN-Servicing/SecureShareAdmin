@@ -1,16 +1,31 @@
 @page
 @model Snsc.SecureShareAdmin.Pages.Users.IndexModel
 @{
-    ViewData["Title"] = "View Users";
+    ViewData["Title"] = "Manage Users";
 }
-<h1 class="page-title">View Users</h1>
+<h1 class="page-title">Manage Users</h1>
 
 <form method="post" asp-page-handler="Search" class="fieldset-ssi">
     <legend>User Filter</legend>
-    <p class="small mb-2">Enter all or part of a user's email address (a.k.a. user name) and click Search.</p>
-    <div class="input-group">
-        <input class="form-control" asp-for="Search" style="width:30em" />
-        <button type="submit" class="btn btn-ssi">Search</button>
+    <div class="row g-2 align-items-start">
+        <div class="col-md-4">
+            <label class="form-label form-label-sm" asp-for="EmailSearch">Email</label>
+            <input class="form-control form-control-sm" asp-for="EmailSearch"
+                   title="All or part of the user's email address (user name)." />
+            <div class="form-text">All or part of the user's email address (user name).</div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label form-label-sm" asp-for="NameSearch">Name</label>
+            <input class="form-control form-control-sm" asp-for="NameSearch"
+                   title="Search first and last name. Separate multiple terms with spaces." />
+            <div class="form-text">Search first and last name. Separate multiple terms with spaces.</div>
+        </div>
+        <div class="col-auto">
+            <label class="form-label form-label-sm">&nbsp;</label>
+            <div>
+                <button type="submit" class="btn btn-sm btn-ssi">Search</button>
+            </div>
+        </div>
     </div>
 </form>
 
@@ -20,7 +35,7 @@
 }
 else
 {
-    <table class="table table-sm table-ssi mt-3">
+    <table class="table table-sm table-ssi table-ssi-nav mt-3">
         <thead>
             <tr>
                 <th>User Name</th>
@@ -33,10 +48,22 @@ else
         @foreach (var user in Model.Users)
         {
             <tr>
-                <td><a asp-page="/Users/Edit" asp-route-userName="@user.UserName">@user.UserName</a></td>
-                <td>@user.Name</td>
-                <td>@(user.CreationDate == DateTime.MinValue ? "" : user.CreationDate.ToString("d"))</td>
-                <td>@user.Comment</td>
+                <td>
+                    <a class="table-ssi-nav-fill" asp-page="/Users/Edit" asp-route-externalUserId="@user.UserId">@user.UserName</a>
+                </td>
+                <td>
+                    <a class="table-ssi-nav-fill" asp-page="/Users/Edit" asp-route-externalUserId="@user.UserId">@user.Name</a>
+                </td>
+                <td>
+                    <a class="table-ssi-nav-fill" asp-page="/Users/Edit" asp-route-externalUserId="@user.UserId">
+                        @(user.CreationDate == DateTime.MinValue ? "\u00A0" : user.CreationDate.ToString("d"))
+                    </a>
+                </td>
+                <td>
+                    <a class="table-ssi-nav-fill" asp-page="/Users/Edit" asp-route-externalUserId="@user.UserId">
+                        @(string.IsNullOrEmpty(user.Comment) ? "\u00A0" : user.Comment)
+                    </a>
+                </td>
             </tr>
         }
         </tbody>

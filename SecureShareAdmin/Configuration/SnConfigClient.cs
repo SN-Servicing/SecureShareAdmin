@@ -7,15 +7,24 @@ namespace Snsc.SecureShareAdmin.Configuration;
 
 public sealed class SnConfigClient
 {
+    // SNConfig names are inverted vs AWS docs: AmazonSecretAccessKeyID holds the AKIA… access key id.
+    private const string AutomationSupportScope = "SnscAutomationSupport";
+    private const string AmazonAccessKeySetting = "AmazonSecretAccessKeyID";
+    private const string AmazonSecretKeySetting = "AmazonSecretKeyID";
+    private const string AmazonRegionSetting = "AmazonRegion";
+
     private readonly SnConfigOptions _options;
     private readonly object _lock = new();
     private readonly Dictionary<string, string> _connectionStrings = new(StringComparer.OrdinalIgnoreCase);
+    private DataSet? _configData;
     private bool _loaded;
 
     public SnConfigClient(IOptions<SnConfigOptions> options)
     {
         _options = options.Value;
     }
+
+    public string EnvironmentName => _options.EnvironmentName;
 
     public string GetConnectionString(string key)
     {
@@ -29,6 +38,44 @@ public sealed class SnConfigClient
             $"Database connection string '{key}' not found in SNConfig. " +
             "Ensure SNConfig has ApplicationType='DBConnectionString' for that key, " +
             "and SnConfig:WebServiceUrl / SnConfig:EnvironmentName are configured.");
+    }
+
+    /// <summary>
+    /// Reads a value from SNConfigurationData where ScopingType and Name match
+    /// (same DataSet used for DB connection strings).
+    /// </summary>
+    public string? GetConfigValue(string scopingType, string name)
+    {
+        EnsureLoaded();
+        return FindByScopingTypeAndName(scopingType, name);
+    }
+
+    public string RequireConfigValue(string scopingType, string name)
+    {
+        string? value = GetConfigValue(scopingType, name);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new InvalidOperationException(
+                $"Missing required SNConfig value: ScopingType='{scopingType}', Name='{name}'.");
+        }
+
+        return value;
+    }
+
+    public string GetAmazonAccessKeyId()
+    {
+        return RequireConfigValue(AutomationSupportScope, AmazonAccessKeySetting);
+    }
+
+    public string GetAmazonSecretAccessKey()
+    {
+        return RequireConfigValue(AutomationSupportScope, AmazonSecretKeySetting);
+    }
+
+    public string GetAmazonRegion()
+    {
+        string? region = GetConfigValue(AutomationSupportScope, AmazonRegionSetting);
+        return string.IsNullOrWhiteSpace(region) ? "us-east-1" : region.Trim();
     }
 
     private void EnsureLoaded()
@@ -47,12 +94,13 @@ public sealed class SnConfigClient
 
             try
             {
-                DataSet? dataSet = LoadFromService();
-                PopulateConnectionStrings(dataSet);
+                _configData = LoadFromService();
+                PopulateConnectionStrings(_configData);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Trace.WriteLine("[SnConfigClient] Failed to load SNConfig: " + ex.Message);
+                _configData = null;
             }
 
             _loaded = true;
@@ -98,13 +146,9 @@ public sealed class SnConfigClient
 
     private void PopulateConnectionStrings(DataSet? dataSet)
     {
-        if (dataSet == null || dataSet.Tables.Count < 2)
-        {
-            return;
-        }
-
-        DataTable table = dataSet.Tables[1];
-        if (!table.Columns.Contains("ApplicationType") ||
+        DataTable? table = GetConfigurationDataTable(dataSet);
+        if (table == null ||
+            !table.Columns.Contains("ApplicationType") ||
             !table.Columns.Contains("Name") ||
             !table.Columns.Contains("Value"))
         {
@@ -126,5 +170,52 @@ public sealed class SnConfigClient
                 _connectionStrings[name] = value;
             }
         }
+    }
+
+    private string? FindByScopingTypeAndName(string scopingType, string name)
+    {
+        DataTable? table = GetConfigurationDataTable(_configData);
+        if (table == null ||
+            !table.Columns.Contains("ScopingType") ||
+            !table.Columns.Contains("Name") ||
+            !table.Columns.Contains("Value"))
+        {
+            return null;
+        }
+
+        foreach (DataRow row in table.Rows)
+        {
+            string? rowScope = row["ScopingType"] as string;
+            string? rowName = row["Name"] as string;
+            if (!string.Equals(rowScope, scopingType, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (!string.Equals(rowName, name, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            string? value = row["Value"] as string;
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        return null;
+    }
+
+    private static DataTable? GetConfigurationDataTable(DataSet? dataSet)
+    {
+        if (dataSet == null)
+        {
+            return null;
+        }
+
+        if (dataSet.Tables.Contains("SNConfigurationData"))
+        {
+            return dataSet.Tables["SNConfigurationData"];
+        }
+
+        return dataSet.Tables.Count >= 2 ? dataSet.Tables[1] : null;
     }
 }

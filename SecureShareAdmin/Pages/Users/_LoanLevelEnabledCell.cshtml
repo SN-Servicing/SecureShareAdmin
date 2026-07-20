@@ -1,0 +1,16 @@
+@model bool?
+@if (Model is null)
+{
+    <span class="ssi-status ssi-status-bad" aria-hidden="true">&#10005;</span>
+    <span class="ssi-missing">@LoanLevelAccessDisplay.MissingMarker</span>
+}
+else if (Model.Value)
+{
+    <span class="ssi-status ssi-status-ok" aria-hidden="true">&#10003;</span>
+    <span>Yes</span>
+}
+else
+{
+    <span class="ssi-status ssi-status-bad" aria-hidden="true">&#10005;</span>
+    <span>No</span>
+}

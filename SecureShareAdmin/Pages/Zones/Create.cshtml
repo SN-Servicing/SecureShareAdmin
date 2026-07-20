@@ -13,7 +13,10 @@
 <form method="post" asp-page-handler="Create" class="mb-4">
     <div class="mb-2">
         <label class="form-label" asp-for="ZoneTypeId">Zone Type</label>
-        <select class="form-select" asp-for="ZoneTypeId" asp-items="Model.ZoneTypeOptions"></select>
+        <select class="form-select" asp-for="ZoneTypeId" asp-items="Model.ZoneTypeOptions"
+                onchange="document.getElementById('change-zone-type').click();"></select>
+        <button id="change-zone-type" type="submit" class="d-none"
+                formaction="?handler=ChangeZoneType" tabindex="-1" aria-hidden="true"></button>
     </div>
     <div class="mb-2">
         <label class="form-label">@(Model.SelectedType?.PrimaryObjectIdFieldName ?? "Primary Value")</label>
@@ -31,7 +34,7 @@
         <textarea class="form-control" asp-for="Description" rows="3"></textarea>
     </div>
 
-    <h2 class="h6 page-title">Zone Users</h2>
+    <h2 class="h6 page-title">Grant User Access</h2>
     <div class="fieldset-ssi">
         <legend>User Filter</legend>
         <div class="input-group input-group-sm mb-2">
@@ -40,14 +43,27 @@
         </div>
         @if (Model.FoundUsers.Count > 0)
         {
-            <table class="table table-sm table-ssi">
-                <thead><tr><th></th><th>User Name</th><th>Name</th></tr></thead>
+            <p class="ssi-select-summary message-ssi mb-2"
+               hidden
+               data-ssi-select-one="Press Add Zone to add 1 user to the zone."
+               data-ssi-select-many="Press Add Zone to add {count} users to the zone."></p>
+            <table class="table table-sm table-ssi table-ssi-select">
+                <thead><tr><th>User Name</th><th>Name</th></tr></thead>
                 <tbody>
                 @foreach (var user in Model.FoundUsers)
                 {
+                    bool isSelected = Model.SelectedUserNames.Exists(name =>
+                        string.Equals(name, user.UserName, StringComparison.OrdinalIgnoreCase));
                     <tr>
-                        <td><input type="checkbox" name="SelectedUserNames" value="@user.UserName" /></td>
-                        <td>@user.UserName</td>
+                        <td>
+                            <input type="checkbox"
+                                   class="visually-hidden"
+                                   name="SelectedUserNames"
+                                   value="@user.UserName"
+                                   aria-label="Select @user.UserName"
+                                   @(isSelected ? "checked" : null) />
+                            @user.UserName
+                        </td>
                         <td>@user.Name</td>
                     </tr>
                 }

@@ -64,9 +64,20 @@ public sealed class EditModel : PageModel
         return Page();
     }
 
-    public IActionResult OnPostSearchUsers()
+    public IActionResult OnPostChangeZoneType()
     {
         if (!LoadZone(bindForm: true))
+        {
+            return RedirectToPage("/Zones/Index");
+        }
+
+        ClearSecondaryIfNotApplicable();
+        return Page();
+    }
+
+    public IActionResult OnPostSearchUsers()
+    {
+        if (!LoadZone())
         {
             return RedirectToPage("/Zones/Index");
         }
@@ -91,7 +102,7 @@ public sealed class EditModel : PageModel
             ZoneTypeId,
             Description.Trim(),
             PrimaryValue.Trim(),
-            SecondaryValue?.Trim() ?? string.Empty);
+            SecondaryValueForPersist());
 
         if (updateResult == -1)
         {
@@ -123,19 +134,40 @@ public sealed class EditModel : PageModel
 
     public IActionResult OnPostRemoveUser(int zonePermissionId)
     {
+        if (!EnsureCanAdministerZone())
+        {
+            return RedirectToPage("/Zones/Index");
+        }
+
         _zoneCatalog.RemoveUserPermission(zonePermissionId);
         return RedirectToPage(new { ZoneId });
     }
 
     public IActionResult OnPostDeleteZone()
     {
+        if (!EnsureCanAdministerZone())
+        {
+            return RedirectToPage("/Zones/Index");
+        }
+
         _zoneCatalog.DeleteZone(ZoneId);
         return RedirectToPage("/Zones/Index");
+    }
+
+    private bool EnsureCanAdministerZone()
+    {
+        int amsUserId = _amsUser.RequireAmsUserId();
+        return _zoneCatalog.CanUserAdministerZone(amsUserId, ZoneId);
     }
 
     private bool LoadZone(bool bindForm = false)
     {
         int amsUserId = _amsUser.RequireAmsUserId();
+        if (!_zoneCatalog.CanUserAdministerZone(amsUserId, ZoneId))
+        {
+            return false;
+        }
+
         IReadOnlyList<Zone> allZones = _zoneCatalog.GetZonesForAmsUser(amsUserId);
         Zone? zone = allZones.FirstOrDefault(z => z.ZoneId == ZoneId);
         if (zone == null)
@@ -155,8 +187,31 @@ public sealed class EditModel : PageModel
         }
 
         SelectedType = types.FirstOrDefault(t => t.ZoneTypeId == ZoneTypeId) ?? types.FirstOrDefault();
+        if (bindForm)
+        {
+            ClearSecondaryIfNotApplicable();
+        }
+
         LoadZoneUsers();
         return true;
+    }
+
+    private void ClearSecondaryIfNotApplicable()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedType?.SecondaryObjectIdFieldName))
+        {
+            SecondaryValue = null;
+        }
+    }
+
+    private string SecondaryValueForPersist()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedType?.SecondaryObjectIdFieldName))
+        {
+            return string.Empty;
+        }
+
+        return SecondaryValue?.Trim() ?? string.Empty;
     }
 
     private void LoadZoneUsers()

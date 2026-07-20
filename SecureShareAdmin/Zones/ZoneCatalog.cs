@@ -26,6 +26,17 @@ public sealed class ZoneCatalog
         return rows.Select(MapZone).ToList();
     }
 
+    public bool CanUserAdministerZone(int amsUserId, int zoneId)
+    {
+        using IDbConnection connection = _database.CreateOpenConnection(DatabaseTarget.Core);
+        CanAdministerRow? row = connection.QuerySingleOrDefault<CanAdministerRow>(
+            "SecureShare.up_SDIs_CanUserAdministerZone",
+            new { AmsUserID = amsUserId, FileSharingZoneID = zoneId },
+            commandType: CommandType.StoredProcedure);
+
+        return row?.CanAdminister == true;
+    }
+
     public IReadOnlyList<Zone> GetZonesForExternalUser(Guid aspNetUserId)
     {
         using IDbConnection connection = _database.CreateOpenConnection(DatabaseTarget.Core);
@@ -59,6 +70,11 @@ public sealed class ZoneCatalog
 
     public Zone? GetZone(int amsUserId, int zoneId)
     {
+        if (!CanUserAdministerZone(amsUserId, zoneId))
+        {
+            return null;
+        }
+
         return GetZonesForAmsUser(amsUserId).FirstOrDefault(zone => zone.ZoneId == zoneId);
     }
 
@@ -196,6 +212,7 @@ public sealed class ZoneCatalog
             SecondaryFieldName = row.SecondaryObjectIDFieldName ?? string.Empty,
             SecondaryIdValue = row.SecondaryObjectID ?? string.Empty,
             FileCount = row.FileCount,
+            LastUploadDateUtc = row.LastUploadDateUTC,
             NotificationOptIn = row.NotificationOptIn ?? false
         };
     }
@@ -217,12 +234,20 @@ public sealed class ZoneCatalog
         };
     }
 
+    private sealed class CanAdministerRow
+    {
+        public int AmsUserID { get; init; }
+        public int FileSharingZoneID { get; init; }
+        public bool CanAdminister { get; init; }
+    }
+
     private sealed class ZoneRow
     {
         public string? Description { get; init; }
         public int FileCount { get; init; }
         public int FileSharingZoneID { get; init; }
         public int? FileSharingZoneTypeID { get; init; }
+        public DateTime? LastUploadDateUTC { get; init; }
         public bool? NotificationOptIn { get; init; }
         public string? PrimaryObjectID { get; init; }
         public string? PrimaryObjectIDFieldName { get; init; }

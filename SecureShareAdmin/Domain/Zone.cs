@@ -12,5 +12,6 @@ public sealed class Zone
     public string SecondaryFieldName { get; init; } = string.Empty;
     public string SecondaryIdValue { get; init; } = string.Empty;
     public int FileCount { get; init; }
+    public DateTime? LastUploadDateUtc { get; init; }
     public bool NotificationOptIn { get; init; }
 }

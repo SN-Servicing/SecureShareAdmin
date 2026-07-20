@@ -52,22 +52,32 @@ public sealed class CreateModel : PageModel
     public void OnPostSearchUsers()
     {
         BindTypes();
-        if (!string.IsNullOrWhiteSpace(UserSearch))
-        {
-            FoundUsers = _users.FindByUserName("%" + UserSearch.Trim() + "%");
-        }
+        RestoreFoundUsers();
+    }
+
+    public IActionResult OnPostChangeZoneType()
+    {
+        BindTypes();
+        ClearSecondaryIfNotApplicable();
+        RestoreFoundUsers();
+        return Page();
     }
 
     public IActionResult OnPostCreate()
     {
         BindTypes();
+        ClearSecondaryIfNotApplicable();
         if (ZoneTypeId <= 0 || string.IsNullOrWhiteSpace(Description) || string.IsNullOrWhiteSpace(PrimaryValue))
         {
             ErrorMessage = "Zone type, description, and primary value are required.";
             return Page();
         }
 
-        int zoneId = _zoneCatalog.CreateZone(PrimaryValue.Trim(), SecondaryValue?.Trim() ?? string.Empty, ZoneTypeId, Description.Trim());
+        int zoneId = _zoneCatalog.CreateZone(
+            PrimaryValue.Trim(),
+            SecondaryValueForPersist(),
+            ZoneTypeId,
+            Description.Trim());
         if (zoneId == -1)
         {
             ErrorMessage = $"{SelectedType?.PrimaryObjectIdFieldName ?? "Primary value"} {PrimaryValue} already exists.";
@@ -96,6 +106,32 @@ public sealed class CreateModel : PageModel
         if (SelectedType != null && ZoneTypeId == 0)
         {
             ZoneTypeId = SelectedType.ZoneTypeId;
+        }
+    }
+
+    private void ClearSecondaryIfNotApplicable()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedType?.SecondaryObjectIdFieldName))
+        {
+            SecondaryValue = null;
+        }
+    }
+
+    private string SecondaryValueForPersist()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedType?.SecondaryObjectIdFieldName))
+        {
+            return string.Empty;
+        }
+
+        return SecondaryValue?.Trim() ?? string.Empty;
+    }
+
+    private void RestoreFoundUsers()
+    {
+        if (!string.IsNullOrWhiteSpace(UserSearch))
+        {
+            FoundUsers = _users.FindByUserName("%" + UserSearch.Trim() + "%");
         }
     }
 }

@@ -1,9 +1,9 @@
 @page
 @model Snsc.SecureShareAdmin.Pages.Zones.IndexModel
 @{
-    ViewData["Title"] = "View Zones";
+    ViewData["Title"] = "Manage Zones";
 }
-<h1 class="page-title">View Zones</h1>
+<h1 class="page-title">Manage Zones</h1>
 
 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
 {
@@ -33,31 +33,43 @@
 }
 else
 {
-    <table class="table table-sm table-ssi">
+    <table class="table table-sm table-ssi table-ssi-nav">
         <thead>
             <tr>
-                <th>Zone Type</th>
+                <th>Type</th>
                 <th>Description</th>
-                <th>File Zone Details</th>
-                <th>File Count</th>
-                <th></th>
+                <th>Details</th>
+                <th>Files</th>
+                <th>Last Upload</th>
+                <th>Notify</th>
             </tr>
         </thead>
         <tbody>
         @foreach (var zone in Model.Zones)
         {
             <tr>
-                <td>@zone.ZoneTypeName</td>
-                <td><a asp-page="/Zones/Edit" asp-route-zoneId="@zone.ZoneId">@zone.Description</a></td>
                 <td>
-                    @zone.PrimaryFieldName: @zone.PrimaryIdValue
-                    @if (!string.IsNullOrEmpty(zone.SecondaryIdValue))
-                    {
-                        <span class="ms-3">@zone.SecondaryFieldName: @zone.SecondaryIdValue</span>
-                    }
+                    <a class="table-ssi-nav-fill" asp-page="/Zones/Edit" asp-route-zoneId="@zone.ZoneId">@zone.ZoneTypeName</a>
                 </td>
-                <td>@zone.FileCount</td>
                 <td>
+                    <a class="table-ssi-nav-fill" asp-page="/Zones/Edit" asp-route-zoneId="@zone.ZoneId">@zone.Description</a>
+                </td>
+                <td>
+                    <a class="table-ssi-nav-fill" asp-page="/Zones/Edit" asp-route-zoneId="@zone.ZoneId">
+                        <partial name="_ZoneIdentifierDetails" model="zone" />
+                    </a>
+                </td>
+                <td>
+                    <a class="table-ssi-nav-fill" asp-page="/Zones/Edit" asp-route-zoneId="@zone.ZoneId">@zone.FileCount</a>
+                </td>
+                <td>
+                    <a class="table-ssi-nav-fill" asp-page="/Zones/Edit" asp-route-zoneId="@zone.ZoneId">
+                        @(zone.LastUploadDateUtc.HasValue
+                            ? zone.LastUploadDateUtc.Value.ToLocalTime().ToString("g")
+                            : "\u00A0")
+                    </a>
+                </td>
+                <td class="table-ssi-nav-action">
                     <form method="post" asp-page-handler="ToggleNotify" class="d-inline">
                         <input type="hidden" name="zoneId" value="@zone.ZoneId" />
                         <input type="hidden" name="currentlyOptedIn" value="@zone.NotificationOptIn.ToString()" />

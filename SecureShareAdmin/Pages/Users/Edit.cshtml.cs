@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Snsc.SecureShareAdmin.Domain;
+using Snsc.SecureShareAdmin.Email;
 using Snsc.SecureShareAdmin.Security;
 using Snsc.SecureShareAdmin.Users;
 using Snsc.SecureShareAdmin.Zones;
@@ -12,16 +13,22 @@ public sealed class EditModel : PageModel
     private readonly ExternalUserDirectory _users;
     private readonly ZoneCatalog _zoneCatalog;
     private readonly AmsUserContext _amsUser;
+    private readonly NewAccountEmailSender _emailSender;
 
-    public EditModel(ExternalUserDirectory users, ZoneCatalog zoneCatalog, AmsUserContext amsUser)
+    public EditModel(
+        ExternalUserDirectory users,
+        ZoneCatalog zoneCatalog,
+        AmsUserContext amsUser,
+        NewAccountEmailSender emailSender)
     {
         _users = users;
         _zoneCatalog = zoneCatalog;
         _amsUser = amsUser;
+        _emailSender = emailSender;
     }
 
     [BindProperty(SupportsGet = true)]
-    public string UserName { get; set; } = string.Empty;
+    public Guid ExternalUserId { get; set; }
 
     [BindProperty]
     public string FirstName { get; set; } = string.Empty;
@@ -30,7 +37,13 @@ public sealed class EditModel : PageModel
     public string LastName { get; set; } = string.Empty;
 
     [BindProperty]
-    public int UserAccess { get; set; }
+    public bool LoanAccess { get; set; }
+
+    [BindProperty]
+    public bool SharedFilesAccess { get; set; }
+
+    [BindProperty]
+    public int DisabledReasonId { get; set; }
 
     [BindProperty]
     public string? ZoneSearchText { get; set; }
@@ -39,6 +52,9 @@ public sealed class EditModel : PageModel
     public List<int> SelectedZoneIds { get; set; } = new();
 
     public ExternalUser? ExternalUser { get; private set; }
+    public IReadOnlyList<ExternalUserDisabledReason> DisabledReasons { get; private set; } =
+        Array.Empty<ExternalUserDisabledReason>();
+    public LoanLevelAccessValidation LoanLevelAccess { get; private set; } = new();
     public IReadOnlyList<Zone> CurrentZones { get; private set; } = Array.Empty<Zone>();
     public IReadOnlyList<Zone> FoundZones { get; private set; } = Array.Empty<Zone>();
     public string? Message { get; private set; }
@@ -51,6 +67,11 @@ public sealed class EditModel : PageModel
             return RedirectToPage("/Users/Index");
         }
 
+        if (TempData["Message"] is string tempMessage)
+        {
+            Message = tempMessage;
+        }
+
         return Page();
     }
 
@@ -61,7 +82,12 @@ public sealed class EditModel : PageModel
             return RedirectToPage("/Users/Index");
         }
 
-        _users.Update(UserName, FirstName.Trim(), LastName.Trim(), UserAccess, null);
+        _users.Update(
+            ExternalUser!.UserName,
+            FirstName.Trim(),
+            LastName.Trim(),
+            ExternalUserAccessMask.ToPersistedValue(LoanAccess, SharedFilesAccess),
+            DisabledReasonId);
 
         foreach (int zoneId in SelectedZoneIds.Distinct())
         {
@@ -70,7 +96,7 @@ public sealed class EditModel : PageModel
                 continue;
             }
 
-                _zoneCatalog.AddUserPermission(zoneId, ExternalUser!.UserId);
+            _zoneCatalog.AddUserPermission(zoneId, ExternalUser.UserId);
         }
 
         LoadZones();
@@ -82,42 +108,73 @@ public sealed class EditModel : PageModel
 
     public IActionResult OnPostSearchZones()
     {
-        if (!LoadUser(bindForm: true))
+        if (!LoadUser())
         {
             return RedirectToPage("/Users/Index");
         }
 
         int amsUserId = _amsUser.RequireAmsUserId();
         IReadOnlyList<Zone> allZones = _zoneCatalog.GetZonesForAmsUser(amsUserId);
-        FoundZones = Snsc.SecureShareAdmin.Zones.ZoneSearch.FilterAndRank(allZones, null, ZoneSearchText);
+        FoundZones = ZoneSearch.FilterAndRank(allZones, null, ZoneSearchText);
         return Page();
     }
 
     public IActionResult OnPostRemoveZone(int zonePermissionId)
     {
         _zoneCatalog.RemoveUserPermission(zonePermissionId);
-        return RedirectToPage(new { UserName });
+        return RedirectToPage(new { ExternalUserId });
+    }
+
+    public IActionResult OnPostSendPasswordReset()
+    {
+        if (!LoadUser())
+        {
+            return RedirectToPage("/Users/Index");
+        }
+
+        NewAccountEmailResult emailResult = _emailSender.SendPasswordResetEmail(ExternalUser!.UserName);
+        if (emailResult.SkippedForEnvironment)
+        {
+            Message = "Password reset email was not sent for this environment.";
+        }
+        else if (!string.IsNullOrEmpty(emailResult.ErrorMessage))
+        {
+            ErrorMessage = "Password reset email could not be sent: " + emailResult.ErrorMessage;
+        }
+        else
+        {
+            Message = "Password reset email sent to " + ExternalUser.UserName + ".";
+        }
+
+        return Page();
     }
 
     private bool LoadUser(bool bindForm = false)
     {
-        ExternalUser = _users.GetByUserName(UserName);
-        if (ExternalUser == null || ExternalUser.UserId == Guid.Empty)
+        if (ExternalUserId == Guid.Empty)
         {
             return false;
         }
 
-        if (!bindForm)
+        ExternalUserAdminDetails? details = _users.GetDetailsForAdmin(ExternalUserId);
+        if (details == null || details.User.UserId == Guid.Empty)
         {
-            string[] nameParts = (ExternalUser.Name ?? string.Empty).Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-            FirstName = nameParts.Length > 0 ? nameParts[0] : string.Empty;
-            LastName = nameParts.Length > 1 ? nameParts[1] : string.Empty;
-            if (int.TryParse(ExternalUser.Comment?.Split('~')[0], out int access))
-            {
-                UserAccess = access;
-            }
+            return false;
         }
 
+        ExternalUser = details.User;
+        DisabledReasons = details.DisabledReasons;
+
+        if (!bindForm)
+        {
+            FirstName = ExternalUser.FirstName;
+            LastName = ExternalUser.LastName;
+            LoanAccess = ExternalUserAccessMask.HasLoanAccess(ExternalUser.AccessMask);
+            SharedFilesAccess = ExternalUserAccessMask.HasSharedFilesAccess(ExternalUser.AccessMask);
+            DisabledReasonId = ExternalUser.DisabledReasonId;
+        }
+
+        LoanLevelAccess = _users.ValidateAccountForLoanLevelAccess(ExternalUserId);
         LoadZones();
         return true;
     }

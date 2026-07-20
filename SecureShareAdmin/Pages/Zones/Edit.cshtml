@@ -14,11 +14,28 @@
     <div class="alert alert-danger">@Model.ErrorMessage</div>
 }
 
+@foreach (var user in Model.ZoneUsers)
+{
+    <form id="remove-user-@user.ZonePermissionId" method="post" asp-page-handler="RemoveUser" class="d-none">
+        <input type="hidden" name="zonePermissionId" value="@user.ZonePermissionId" />
+        <input type="hidden" asp-for="ZoneId" />
+    </form>
+}
+<form id="delete-zone-form" method="post" asp-page-handler="DeleteZone" class="d-none">
+    <input type="hidden" asp-for="ZoneId" />
+</form>
+<form id="search-users-form" method="post" asp-page-handler="SearchUsers" class="d-none">
+    <input type="hidden" asp-for="ZoneId" />
+</form>
+
 <form method="post" asp-page-handler="Save">
     <input type="hidden" asp-for="ZoneId" />
     <div class="mb-2">
         <label class="form-label" asp-for="ZoneTypeId">Zone Type</label>
-        <select class="form-select" asp-for="ZoneTypeId" asp-items="Model.ZoneTypeOptions"></select>
+        <select class="form-select" asp-for="ZoneTypeId" asp-items="Model.ZoneTypeOptions"
+                onchange="document.getElementById('change-zone-type').click();"></select>
+        <button id="change-zone-type" type="submit" class="d-none"
+                formaction="?handler=ChangeZoneType" tabindex="-1" aria-hidden="true"></button>
     </div>
     <div class="mb-2">
         <label class="form-label">@(Model.SelectedType?.PrimaryObjectIdFieldName ?? "Primary Value")</label>
@@ -36,7 +53,7 @@
         <textarea class="form-control" asp-for="Description" rows="3"></textarea>
     </div>
 
-    <h2 class="h6 page-title">Zone Users</h2>
+    <h2 class="h6 page-title">Current User Access</h2>
     @if (Model.ZoneUsers.Count == 0)
     {
         <p class="text-muted">No users found for this zone</p>
@@ -50,8 +67,9 @@
             {
                 <tr>
                     <td>
-                        <button type="submit" class="btn btn-link btn-sm p-0"
-                                formaction="?handler=RemoveUser&amp;zonePermissionId=@user.ZonePermissionId"
+                        <button type="submit"
+                                class="btn btn-link btn-sm p-0"
+                                form="remove-user-@user.ZonePermissionId"
                                 onclick="return confirm('Are you sure you want to remove this users access to this zone?');">
                             Remove
                         </button>
@@ -64,23 +82,36 @@
         </table>
     }
 
-    <h2 class="h6 page-title">Add Users</h2>
+    <h2 class="h6 page-title">Grant User Access</h2>
     <div class="fieldset-ssi">
         <legend>User Filter</legend>
         <div class="input-group input-group-sm mb-2">
-            <input class="form-control" asp-for="UserSearch" />
-            <button class="btn btn-outline-secondary" type="submit" formaction="?handler=SearchUsers">Search</button>
+            <input class="form-control" asp-for="UserSearch" form="search-users-form" />
+            <button class="btn btn-outline-secondary" type="submit" form="search-users-form">Search</button>
         </div>
         @if (Model.FoundUsers.Count > 0)
         {
-            <table class="table table-sm table-ssi">
-                <thead><tr><th></th><th>User Name</th><th>Name</th></tr></thead>
+            <p class="ssi-select-summary message-ssi mb-2"
+               hidden
+               data-ssi-select-one="Press Save Zone to add 1 user to the zone."
+               data-ssi-select-many="Press Save Zone to add {count} users to the zone."></p>
+            <table class="table table-sm table-ssi table-ssi-select">
+                <thead><tr><th>User Name</th><th>Name</th></tr></thead>
                 <tbody>
                 @foreach (var user in Model.FoundUsers)
                 {
+                    bool isSelected = Model.SelectedUserNames.Exists(name =>
+                        string.Equals(name, user.UserName, StringComparison.OrdinalIgnoreCase));
                     <tr>
-                        <td><input type="checkbox" name="SelectedUserNames" value="@user.UserName" /></td>
-                        <td>@user.UserName</td>
+                        <td>
+                            <input type="checkbox"
+                                   class="visually-hidden"
+                                   name="SelectedUserNames"
+                                   value="@user.UserName"
+                                   aria-label="Select @user.UserName"
+                                   @(isSelected ? "checked" : null) />
+                            @user.UserName
+                        </td>
                         <td>@user.Name</td>
                     </tr>
                 }
@@ -92,8 +123,9 @@
     <div class="d-flex justify-content-between align-items-center mt-3">
         <a asp-page="/Zones/Index">&lt;&lt; Back</a>
         <div class="d-flex gap-2 align-items-center">
-            <button type="submit" class="btn btn-outline-danger"
-                    formaction="?handler=DeleteZone"
+            <button type="submit"
+                    class="btn btn-outline-danger"
+                    form="delete-zone-form"
                     onclick="return confirm('Are you sure you want to delete this zone?');">
                 Delete Zone
             </button>
@@ -101,4 +133,3 @@
         </div>
     </div>
 </form>
-<p class="mt-2"><a asp-page="/Zones/Files" asp-route-zoneId="@Model.ZoneId">View zone files</a></p>

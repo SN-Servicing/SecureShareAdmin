@@ -26,7 +26,7 @@ public sealed class IndexModel : PageModel
 
     public IReadOnlyList<Zone> Zones { get; private set; } = Array.Empty<Zone>();
     public List<SelectListItem> ZoneTypeOptions { get; private set; } = new();
-    public string EmptyMessage { get; private set; } = "Enter search terms to find zones";
+    public string EmptyMessage { get; private set; } = "Enter search terms to find zones. Separate multiple terms with a space.";
     public string? ErrorMessage { get; private set; }
 
     public void OnGet()
@@ -42,6 +42,11 @@ public sealed class IndexModel : PageModel
     public IActionResult OnPostToggleNotify(int zoneId, bool currentlyOptedIn)
     {
         int amsUserId = _amsUser.RequireAmsUserId();
+        if (!_zoneCatalog.CanUserAdministerZone(amsUserId, zoneId))
+        {
+            return RedirectToPage(new { ZoneTypeId, Search });
+        }
+
         _zoneCatalog.SetAmsEmailNotification(zoneId, !currentlyOptedIn, amsUserId);
         return RedirectToPage(new { ZoneTypeId, Search });
     }

@@ -32,23 +32,74 @@ public sealed class ExternalUserDirectory
         parameters.Add("@UserNameToMatch", userNameToMatch);
         parameters.Add("@RETURN_VALUE", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
 
-        IEnumerable<ExternalUserRow> rows = connection.Query<ExternalUserRow>(
+        IEnumerable<ExternalUserListRow> rows = connection.Query<ExternalUserListRow>(
             "SecureShare.GetExternalUsersByName_Admin",
             parameters,
             commandType: CommandType.StoredProcedure);
 
-        return rows.Select(MapUser).ToList();
+        return rows.Select(MapListUser).ToList();
     }
 
-    public ExternalUser? GetByUserId(Guid userId)
+    public ExternalUserAdminDetails? GetDetailsForAdmin(Guid externalUserId)
     {
         using IDbConnection connection = _database.CreateOpenConnection(DatabaseTarget.Core);
-        ExternalUserRow? row = connection.QueryFirstOrDefault<ExternalUserRow>(
-            "SecureShare.GetExternalUser",
-            new { ExternalUserId = userId },
+        using SqlMapper.GridReader multi = connection.QueryMultiple(
+            "SecureShare.up_SDIs_GetUserDetailsForAdmin",
+            new { ExternalUserId = externalUserId },
             commandType: CommandType.StoredProcedure);
 
-        return row == null ? null : MapUser(row);
+        ExternalUserDetailsRow? row = multi.Read<ExternalUserDetailsRow>().FirstOrDefault();
+        if (row == null)
+        {
+            return null;
+        }
+
+        IReadOnlyList<ExternalUserDisabledReason> reasons = multi.Read<DisabledReasonRow>()
+            .Select(MapDisabledReason)
+            .ToList();
+
+        return new ExternalUserAdminDetails
+        {
+            User = MapDetailsUser(row),
+            DisabledReasons = reasons
+        };
+    }
+
+    public LoanLevelAccessValidation ValidateAccountForLoanLevelAccess(Guid externalUserId)
+    {
+        try
+        {
+            using IDbConnection connection = _database.CreateOpenConnection(DatabaseTarget.Core);
+            using SqlMapper.GridReader multi = connection.QueryMultiple(
+                "SecureShare.up_SDIs_ValidateAccountForLoanLevelAccess",
+                new { ExternalUserID = externalUserId },
+                commandType: CommandType.StoredProcedure);
+
+            LoanLevelDirectoryRow? directoryRow = multi.Read<LoanLevelDirectoryRow>().FirstOrDefault();
+            IReadOnlyList<string> groups = multi.Read<InvestorAccessGroupRow>()
+                .Select(row => row.InvestorAccessGroupName)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(name => name!)
+                .ToList();
+
+            return new LoanLevelAccessValidation
+            {
+                DirectoryAccount = directoryRow == null ? null : MapDirectoryAccount(directoryRow),
+                InvestorAccessGroups = groups
+            };
+        }
+        catch (Exception ex)
+        {
+            return new LoanLevelAccessValidation
+            {
+                ErrorMessage = $"Unable to load loan access dependencies: {ex.Message}"
+            };
+        }
+    }
+
+    public ExternalUser? GetByUserId(Guid externalUserId)
+    {
+        return GetDetailsForAdmin(externalUserId)?.User;
     }
 
     public ExternalUser? GetByUserName(string userName)
@@ -106,7 +157,7 @@ public sealed class ExternalUserDirectory
 
         return returnCode switch
         {
-            0 => (ExternalUserCreateResult.Success, externalUserId ?? Guid.NewGuid()),
+            0 => (ExternalUserCreateResult.Success, externalUserId ?? Guid.Empty),
             6 => (ExternalUserCreateResult.DuplicateUserName, null),
             7 => (ExternalUserCreateResult.DuplicateEmail, null),
             8 => (ExternalUserCreateResult.Rejected, null),
@@ -114,19 +165,91 @@ public sealed class ExternalUserDirectory
         };
     }
 
-    private static ExternalUser MapUser(ExternalUserRow row)
+    private static ExternalUser MapListUser(ExternalUserListRow row)
     {
+        string firstName = row.FirstName ?? string.Empty;
+        string lastName = row.LastName ?? string.Empty;
+        string displayName = row.Name ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            displayName = $"{firstName} {lastName}".Trim();
+        }
+
         return new ExternalUser
         {
             UserId = ParseGuid(row.ExternalUserId),
             UserName = row.Email ?? row.UserName ?? string.Empty,
             Email = row.Email ?? string.Empty,
-            Name = row.Name ?? string.Empty,
+            FirstName = firstName,
+            LastName = lastName,
+            Name = displayName,
             Comment = row.Comment ?? string.Empty,
             IsApproved = row.IsApproved,
             CreationDate = ParseDate(row.CreateDate),
             LastLoginDate = ParseDate(row.LastLoginDate)
         };
+    }
+
+    private static ExternalUser MapDetailsUser(ExternalUserDetailsRow row)
+    {
+        string firstName = row.FirstName ?? string.Empty;
+        string lastName = row.LastName ?? string.Empty;
+        string displayName = $"{firstName} {lastName}".Trim();
+        if (string.IsNullOrEmpty(displayName))
+        {
+            displayName = row.SNUserAccount ?? row.UserName ?? string.Empty;
+        }
+
+        return new ExternalUser
+        {
+            UserId = row.ExternalUserId,
+            UserName = row.UserName ?? string.Empty,
+            Email = row.UserName ?? string.Empty,
+            FirstName = firstName,
+            LastName = lastName,
+            Name = displayName,
+            AccessMask = row.ExternalUserAccessMaskId,
+            DisabledReasonId = row.ExternalUserDisabledReasonId,
+            Comment = row.DisabledReasonDescription ?? string.Empty,
+            CreationDate = ParseDate(row.CreateDate),
+            LastLoginDate = ParseDate(row.LastLoginDate)
+        };
+    }
+
+    private static ExternalUserDisabledReason MapDisabledReason(DisabledReasonRow row)
+    {
+        return new ExternalUserDisabledReason
+        {
+            ExternalUserDisabledReasonId = row.ExternalUserDisabledReasonId,
+            Name = row.Name ?? string.Empty,
+            Description = row.Description ?? string.Empty,
+            AllowAutomaticReenable = row.AllowAutomaticReenable
+        };
+    }
+
+    private static LoanLevelDirectoryAccount MapDirectoryAccount(LoanLevelDirectoryRow row)
+    {
+        return new LoanLevelDirectoryAccount
+        {
+            ExternalUserId = row.ExternalUserId,
+            AmsUserId = row.AmsUserID,
+            AmsFirstName = NullIfWhiteSpace(row.AmsFirstName),
+            AmsLastName = NullIfWhiteSpace(row.AmsLastName),
+            AmsEmail = NullIfWhiteSpace(row.AmsEmail),
+            AmsAccountIsEnabled = row.AmsAccountIsEnabled,
+            AmsAccountDisabledDate = row.AmsAccountDisabledDate,
+            ActiveDirectorySid = NullIfWhiteSpace(row.ActiveDirectorySID),
+            AdFirstName = NullIfWhiteSpace(row.ADFirstName),
+            AdLastName = NullIfWhiteSpace(row.ADLastName),
+            AdEmail = NullIfWhiteSpace(row.ADEmail),
+            AdAccountIsEnabled = row.ADAccountIsEnabled,
+            EnteredTerminatedUsersDate = row.EnteredTerminatedUsersDate
+        };
+    }
+
+    private static string? NullIfWhiteSpace(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
     private static Guid ParseGuid(object? value)
@@ -159,15 +282,62 @@ public sealed class ExternalUserDirectory
         return DateTime.TryParse(Convert.ToString(value), out DateTime parsed) ? parsed : DateTime.MinValue;
     }
 
-    private sealed class ExternalUserRow
+    private sealed class ExternalUserListRow
     {
         public object? ExternalUserId { get; init; }
         public string? Name { get; init; }
+        public string? FirstName { get; init; }
+        public string? LastName { get; init; }
         public string? Email { get; init; }
         public string? UserName { get; init; }
         public string? Comment { get; init; }
         public bool IsApproved { get; init; }
         public object? CreateDate { get; init; }
         public object? LastLoginDate { get; init; }
+    }
+
+    private sealed class ExternalUserDetailsRow
+    {
+        public Guid ExternalUserId { get; init; }
+        public string? UserName { get; init; }
+        public string? FirstName { get; init; }
+        public string? LastName { get; init; }
+        public int ExternalUserAccessMaskId { get; init; }
+        public object? LastLoginDate { get; init; }
+        public int ExternalUserDisabledReasonId { get; init; }
+        public string? DisabledReasonDescription { get; init; }
+        public int ExternalUserNotificationSettingMaskId { get; init; }
+        public object? CreateDate { get; init; }
+        public string? SNUserAccount { get; init; }
+    }
+
+    private sealed class DisabledReasonRow
+    {
+        public int ExternalUserDisabledReasonId { get; init; }
+        public string? Name { get; init; }
+        public string? Description { get; init; }
+        public bool AllowAutomaticReenable { get; init; }
+    }
+
+    private sealed class LoanLevelDirectoryRow
+    {
+        public Guid ExternalUserId { get; init; }
+        public int? AmsUserID { get; init; }
+        public string? AmsFirstName { get; init; }
+        public string? AmsLastName { get; init; }
+        public string? AmsEmail { get; init; }
+        public bool? AmsAccountIsEnabled { get; init; }
+        public DateTime? AmsAccountDisabledDate { get; init; }
+        public string? ActiveDirectorySID { get; init; }
+        public string? ADFirstName { get; init; }
+        public string? ADLastName { get; init; }
+        public string? ADEmail { get; init; }
+        public bool? ADAccountIsEnabled { get; init; }
+        public DateTime? EnteredTerminatedUsersDate { get; init; }
+    }
+
+    private sealed class InvestorAccessGroupRow
+    {
+        public string? InvestorAccessGroupName { get; init; }
     }
 }

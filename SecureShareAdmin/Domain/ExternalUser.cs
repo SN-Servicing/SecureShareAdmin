@@ -6,6 +6,10 @@ public sealed class ExternalUser
     public string UserName { get; init; } = string.Empty;
     public string Email { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
+    public string FirstName { get; init; } = string.Empty;
+    public string LastName { get; init; } = string.Empty;
+    public int AccessMask { get; init; }
+    public int DisabledReasonId { get; init; }
     public string Comment { get; init; } = string.Empty;
     public bool IsApproved { get; init; }
     public DateTime CreationDate { get; init; }

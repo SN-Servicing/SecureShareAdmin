@@ -12,6 +12,7 @@
 .vscode/
 .cr/
 planning/
+publish/
 
 # these are only around temporarily
 FileTransfers/

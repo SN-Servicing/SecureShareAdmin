@@ -1,0 +1,10 @@
+@model Snsc.SecureShareAdmin.Domain.Zone
+<span class="ssi-zone-ids">
+    <span class="ssi-field-chip">@Model.PrimaryFieldName</span>@Model.PrimaryIdValue
+    @if (!string.IsNullOrEmpty(Model.SecondaryIdValue))
+    {
+        <span class="ssi-zone-id-pair ms-3">
+            <span class="ssi-field-chip">@Model.SecondaryFieldName</span>@Model.SecondaryIdValue
+        </span>
+    }
+</span>

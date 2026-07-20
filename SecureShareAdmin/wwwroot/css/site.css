@@ -1,22 +1,49 @@
-:root {
+:root,
+[data-bs-theme="light"] {
   --ssi-maroon: #660000;
   --ssi-cream: #ffffcc;
   --ssi-link: #330099;
   --ssi-border: #cc9966;
   --ssi-header-fg: #ffffcc;
   --ssi-message: #3366ff;
+  --ssi-body-bg: #faf8f5;
+  --ssi-body-fg: #222;
+  --ssi-surface: #fff;
+  --ssi-surface-muted: #f7f7f7;
+  --ssi-row-hover: #f0e6d8;
+  --ssi-row-selected: #e5d2c0;
+  --ssi-row-selected-hover: #dcc4ae;
+  --ssi-action-hover: #fff3cd;
+  --ssi-fieldset-border: #ccc;
+  --ssi-btn-hover: #4d0000;
+}
+
+[data-bs-theme="dark"] {
+  --ssi-maroon: #8b1a1a;
+  --ssi-cream: #3d2e1f;
+  --ssi-link: #b8a0ff;
+  --ssi-border: #8a6a4a;
+  --ssi-header-fg: #f5e6a8;
+  --ssi-message: #7eb6ff;
+  --ssi-body-bg: #1a1614;
+  --ssi-body-fg: #e8e2dc;
+  --ssi-surface: #2a2420;
+  --ssi-surface-muted: #322c28;
+  --ssi-row-hover: #3a322c;
+  --ssi-row-selected: #4a3530;
+  --ssi-row-selected-hover: #5a4038;
+  --ssi-action-hover: #4a3f28;
+  --ssi-fieldset-border: #5a5048;
+  --ssi-btn-hover: #a02828;
 }
 
 html {
   font-size: 14px;
-  position: relative;
-  min-height: 100%;
 }
 
 body {
-  margin-bottom: 4rem;
-  color: #222;
-  background: #faf8f5;
+  color: var(--ssi-body-fg);
+  background: var(--ssi-body-bg);
 }
 
 a {
@@ -56,7 +83,81 @@ a {
 .table-ssi tbody td {
   border-color: var(--ssi-border);
   color: var(--ssi-link);
-  background: #fff;
+  background: var(--ssi-surface);
+}
+
+/* Clickable row cells with distinct hover from action columns (e.g. notify toggle) */
+.table-ssi-nav a.table-ssi-nav-fill {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  margin: -0.3rem -0.5rem;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+}
+
+.table-ssi-nav a.table-ssi-nav-fill:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+.table-ssi-nav tbody tr:has(a.table-ssi-nav-fill:hover) td:not(.table-ssi-nav-action) {
+  background-color: var(--ssi-row-hover);
+}
+
+.table-ssi-nav tbody tr:has(a.table-ssi-nav-fill:hover) td.table-ssi-nav-action {
+  background-color: var(--ssi-surface-muted);
+}
+
+.table-ssi-nav-action {
+  cursor: default;
+  white-space: nowrap;
+}
+
+.table-ssi-nav tbody tr:has(.table-ssi-nav-action:hover) td.table-ssi-nav-action {
+  background-color: var(--ssi-action-hover);
+}
+
+.table-ssi-nav .table-ssi-nav-action .btn-link {
+  text-decoration: underline;
+}
+
+/* Whole-row selection (checkbox kept for form post / a11y) */
+.table-ssi-select tbody tr {
+  cursor: pointer;
+}
+
+.table-ssi-select tbody tr:hover td {
+  background-color: var(--ssi-row-hover);
+}
+
+.table-ssi-select tbody tr:has(input[type="checkbox"]:checked) td {
+  background-color: var(--ssi-row-selected);
+}
+
+.table-ssi-select tbody tr:has(input[type="checkbox"]:checked) td:first-child {
+  box-shadow: inset 3px 0 0 var(--ssi-maroon);
+}
+
+.table-ssi-select tbody tr:has(input[type="checkbox"]:checked):hover td {
+  background-color: var(--ssi-row-selected-hover);
+}
+
+.table-ssi-reason-pick tbody tr {
+  cursor: pointer;
+}
+
+.table-ssi-reason-pick tbody tr:has(input[type="radio"]:checked) td {
+  background-color: var(--ssi-row-selected);
+}
+
+.table-ssi-reason-pick tbody tr:has(input[type="radio"]:checked) td:first-child {
+  box-shadow: inset 3px 0 0 var(--ssi-maroon);
+}
+
+.table-ssi-reason-pick tbody label {
+  cursor: pointer;
+  display: block;
 }
 
 .btn-ssi {
@@ -66,8 +167,8 @@ a {
 }
 
 .btn-ssi:hover {
-  background-color: #4d0000;
-  border-color: #4d0000;
+  background-color: var(--ssi-btn-hover);
+  border-color: var(--ssi-btn-hover);
   color: #fff;
 }
 
@@ -77,7 +178,7 @@ a {
 }
 
 .fieldset-ssi {
-  border: 1px solid #ccc;
+  border: 1px solid var(--ssi-fieldset-border);
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
 }
@@ -89,11 +190,61 @@ a {
   padding: 0 0.35rem;
 }
 
-.footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  white-space: nowrap;
-  line-height: 3rem;
-  background: #fff;
+table.table.table-ssi-loan-compare {
+  width: max-content !important;
+  max-width: 100%;
 }
+
+table.table.table-ssi-loan-compare > :not(caption) > * > * {
+  padding-left: 0.75rem;
+  padding-right: 1rem;
+  white-space: nowrap;
+}
+
+table.table.table-ssi-loan-compare th[scope="row"] {
+  width: 1%;
+  font-weight: 600;
+  padding-left: 0.5rem;
+  padding-right: 0.75rem;
+}
+
+table.table.table-ssi-loan-compare thead th {
+  font-weight: 600;
+}
+
+.ssi-status {
+  display: inline-block;
+  font-weight: 700;
+  margin-right: 0.35rem;
+}
+
+.ssi-status-ok {
+  color: #198754;
+}
+
+.ssi-status-bad {
+  color: #dc3545;
+}
+
+.ssi-missing {
+  font-style: italic;
+}
+
+.ssi-field-chip {
+  display: inline-block;
+  padding: 0.12em 0.45em;
+  margin-right: 0.35em;
+  font-size: 0.75em;
+  font-weight: 600;
+  line-height: 1.25;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+  color: var(--ssi-maroon);
+  background: var(--ssi-cream);
+  border: 1px solid var(--ssi-border);
+}
+
+.ssi-zone-ids {
+  white-space: nowrap;
+}
+

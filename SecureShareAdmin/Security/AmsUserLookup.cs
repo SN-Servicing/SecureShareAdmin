@@ -29,7 +29,7 @@ public sealed class AmsUserLookup
 
         using IDbConnection connection = _database.CreateOpenConnection(DatabaseTarget.LmsSystem);
         return connection.QueryFirstOrDefault<int?>(
-            "SELECT UserID FROM [User] WHERE NTLoginName = @NTUserName",
+            "SELECT UserID FROM dbo.[User] WHERE NTLoginName = @NTUserName",
             new { NTUserName = ntLoginName });
     }
 }

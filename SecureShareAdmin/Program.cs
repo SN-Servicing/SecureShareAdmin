@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Negotiate;
 using Microsoft.AspNetCore.Authorization;
 using Snsc.SecureShareAdmin.Configuration;
 using Snsc.SecureShareAdmin.Data;
+using Snsc.SecureShareAdmin.Email;
 using Snsc.SecureShareAdmin.Security;
 using Snsc.SecureShareAdmin.Users;
 using Snsc.SecureShareAdmin.Zones;
@@ -13,10 +14,10 @@ builder.Services.Configure<SecureShareOptions>(builder.Configuration.GetSection(
 
 builder.Services.AddSingleton<SnConfigClient>();
 builder.Services.AddSingleton<AppDatabase>();
+builder.Services.AddSingleton<NewAccountEmailSender>();
 builder.Services.AddScoped<AmsUserLookup>();
 builder.Services.AddScoped<AmsUserContext>();
 builder.Services.AddScoped<ZoneCatalog>();
-builder.Services.AddScoped<ZoneFileCatalog>();
 builder.Services.AddScoped<ExternalUserDirectory>();
 builder.Services.AddHttpContextAccessor();
 
